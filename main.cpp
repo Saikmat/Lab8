@@ -3,8 +3,11 @@
 * Name: Sai Matukumalli
 * Class: CMSY-171
 * Instructor: Justyn Crook
-* Program Name: Lab 3
-* Program Description:
+* Program Name: Lab 8
+* Program Description: This program is a modification of the Animal Database. It uses linked lists instead of vectors
+* The goal of the project is to store several animal records in a linked list.
+* It features the ability to add, display all, display endangered, and search and update animals in the list, as well as
+* updating the file behind the program.
 */
 
 
@@ -40,7 +43,7 @@ void sortStrings(list<Animal *> &animals);
 
 void readAnimal(list<Animal*>& animals, fstream& stream);
 
-void readSpecies(vector<string>& animals, fstream&);
+void readSpecies(vector<string>& species, fstream&);
 
 void refreshFile(list<Animal *>& animals, fstream &stream);
 
@@ -235,7 +238,7 @@ void addAnimals(list<Animal *> *database, vector<string> species) {
 
 /*
  * This function refreshes the file to ensure that the file is in the same order as the list
- * Modifies entire file, so takes a long time
+ * Modifies entire file, so takes a long time, avoid using if possible
  */
 void refreshFile(list<Animal *>& animals, fstream &stream) {
     stream.seekp(ios::beg);
@@ -264,6 +267,10 @@ void displayAnimals(list<Animal*> database) {
     }
 }
 
+/*
+ * Displays the names of the animals that are endangered
+ * Takes in the list of animals and checks if the animal is endangered, and prints
+ */
 void displayEndangered(list<Animal*> database) {
     const char ENDANGERED_STRING[] = " is endangered\n";
     sortStrings(database);
@@ -277,6 +284,11 @@ void displayEndangered(list<Animal*> database) {
     }
 }
 
+/*
+ * Uses linear search to find the animals in the list given a user specified name
+ * Asks the user if they want to update the record as well
+ * Takes in the list of animals, the list of species, and a filestream that is passed through
+ */
 void searchAnimals(list<Animal*> animals, const vector<string>& species, fstream &stream) {
     sortStrings(animals);
     cout << "Enter the name of the animal you are looking for: ";
@@ -313,6 +325,9 @@ void searchAnimals(list<Animal*> animals, const vector<string>& species, fstream
     cout << "\nThere is no animal entry corresponding to \"" << input << "\"" << endl;
 }
 
+/*
+ * Finds the location of the record in the file and puts the new animal record into the file, overwriting the old record
+ */
 void updateRecordInFile(list<Animal*> animals, int location, fstream &stream) {
     stream.seekg(location * sizeof(Animal), ios::beg);
     stream.seekp(ios::beg + location * sizeof(Animal));
@@ -320,6 +335,11 @@ void updateRecordInFile(list<Animal*> animals, int location, fstream &stream) {
     stream.close();
 }
 
+/*
+ * Asks the user to update the values in the animal, and then pushes the value into the vector
+ * Also calls updateRecordInFile to update the file
+ * Takes in the list of animals, the location that needs to be updated, the list of species and the filestream passes through
+ */
 void updateRecordInVector(list<Animal*> &animals, int loc, vector<string> species, fstream &stream) {
     const string animalUpdate = "Enter the value you want to change animal to(! for no change)";
     const string speciesUpdate = "Enter the new species of the animal";
@@ -361,10 +381,17 @@ void updateRecordInVector(list<Animal*> &animals, int loc, vector<string> specie
     updateRecordInFile(animals, loc, stream);
 }
 
+/*
+ * Sorts the animals in the parameter animals vector by name
+ */
 void sortStrings(list<Animal*> &animals) {
     animals.sort([](Animal *a, Animal *b) { return strncmp(a->name, b->name, MAX_LENGTH) < 0; });
 }
 
+/*
+ * Reads the animals from the filesteream and pushes them onto the vector
+ * Takes in parameters of the list of animals and the filestream
+ */
 void readAnimal(list<Animal *> &animals, fstream &stream) {
     while (!stream.eof()) {
         if(!stream.good() || stream.eof()) {
@@ -380,23 +407,34 @@ void readAnimal(list<Animal *> &animals, fstream &stream) {
     sortStrings(animals);
 }
 
+/*
+ * Updates the endangered values for all animal records, good if the file data is incorrect or just needs to be refreshed
+ * Takes in the list of animals
+ */
 void updateEndangered(list<Animal *> *animals) {
     for (Animal *animal : *animals) {
         animal->endangered = animal->typeCount < ENDANGERED_COUNT;
     }
 }
 
-void readSpecies(vector<string> &animals, fstream &stream) {
+/*
+ * Reads the species file and pushes it into a vector
+ * Takes in the list of species and a filestream that it reads from
+ */
+void readSpecies(vector<string> &species, fstream &stream) {
     while(!stream.eof()){
         char *str = new char[25];
         stream.getline(str, 25);
-        animals.emplace_back(str);
+        species.emplace_back(str);
 
     }
 }
 
 /*
- * Works but needs to be perfected
+ * A function to replicate the behavior of .at(int loc) from vectors for linked lists
+ * Used if random access is needed
+ * Takes in the list of animals and the location that is needed
+ * Returns the animal at that location
  */
 Animal* getValueInList(list<Animal*> animals, int location){
     auto iter = animals.begin();
