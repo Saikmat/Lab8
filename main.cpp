@@ -1,8 +1,7 @@
 /*
-* Copyright 2023 - Howard Community College All rights reserved; Unauthorized duplication prohibited.
+* Copyright 2024 - Howard Community College All rights reserved; Unauthorized duplication prohibited.
 * Name: Sai Matukumalli
 * Class: CMSY-171
-* Instructor: Justyn Crook
 * Program Name: Lab 8
 * Program Description: This program is a modification of the Animal Database. It uses linked lists instead of vectors
 * The goal of the project is to store several animal records in a linked list.
