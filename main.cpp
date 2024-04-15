@@ -30,29 +30,29 @@ struct Animal {
 
 void printCopyright();
 
-void addAnimals(list<Animal *> *database, vector<string> species);
+void addAnimals(list<Animal> *database, vector<string> species);
 
-void displayAnimals(list<Animal*> database);
+void displayAnimals(list<Animal> database);
 
-void displayEndangered(list<Animal*> database);
+void displayEndangered(list<Animal> database);
 
-void searchAnimals(list<Animal *>, const vector<string>&, fstream&);
+void searchAnimals(list<Animal>, const vector<string>&, fstream&);
 
-void sortStrings(list<Animal *> &animals);
+void sortStrings(list<Animal> &animals);
 
-void readAnimal(list<Animal*>& animals, fstream& stream);
+void readAnimal(list<Animal>& animals, fstream& stream);
 
 void readSpecies(vector<string>& species, fstream&);
 
-void refreshFile(list<Animal *>& animals, fstream &stream);
+void refreshFile(list<Animal>& animals, fstream &stream);
 
-void updateRecordInVector(list<Animal*> &animals, int loc, vector<string> species, fstream &stream);
+void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species, fstream &stream);
 
-void updateRecordInFile(list<Animal *> animals, int location, fstream &stream);
+void updateRecordInFile(list<Animal> animals, int location, fstream &stream);
 
-void updateEndangered(list<Animal *> *animals);
+void updateEndangered(list<Animal> *animals);
 
-Animal* getValueInList(list<Animal*> animals, int location);
+Animal* getValueInList(list<Animal> animals, int location);
 
 int main() {
     printCopyright();
@@ -63,12 +63,12 @@ int main() {
     const int DISPLAY_ENDANGERED_MENU_OPTION = 3;
     const int SEARCH_ANIMALS_MENU_OPTION = 4;
     const int QUIT_MENU_OPTION = 5;
-    const string ANIMAL_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\animal.dat)";
-    const string SPECIES_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\species.txt)";
+    const string ANIMAL_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\Lab8\animal.dat)";
+    const string SPECIES_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\Lab8\species.txt)";
 
     fstream animalRecords;
     animalRecords.open(ANIMAL_RECORD_LOCATION, fstream::in | fstream::out | fstream::binary);
-    list<Animal*> database;
+    list<Animal> database;
     readAnimal(database, animalRecords);
     animalRecords.close();
     animalRecords.open(ANIMAL_RECORD_LOCATION, ios::binary | ios::out);
@@ -140,10 +140,6 @@ int main() {
     speciesRecords.clear();
     animalRecords.close();
     speciesRecords.close();
-    while (!database.empty()) {
-        delete database.back();
-        database.pop_back();
-    }
     database.clear();
     speciesList.clear();
 
@@ -155,14 +151,14 @@ int main() {
  * Prints Howard CC Copyright statement
  */
 void printCopyright() {
-    cout << "Copyright 2023 - Howard Community College All rights reserved; Unauthorized duplication prohibited\n\n\n\n";
+    cout << "Copyright 2024 - Howard Community College All rights reserved; Unauthorized duplication prohibited\n\n\n\n";
 }
 
 /*
  * This function takes in the list where animals are stored as well as the species list
  * It adds an animal to the list given parameters name, species, and population, and checks if it is endangered
  */
-void addAnimals(list<Animal *> *database, vector<string> species) {
+void addAnimals(list<Animal> *database, vector<string> species) {
     int animalCount;
     string speciesName;
     char *inputCstring;
@@ -194,8 +190,8 @@ void addAnimals(list<Animal *> *database, vector<string> species) {
             }
             inputCstring[input.length()] = '\0';\
 
-            for(Animal* animal : *database){
-                if((*animal).name == originalCaps){
+            for(Animal animal : *database){
+                if((animal).name == originalCaps){
                     cout << alreadyFound;
                     flag = true;
                 }
@@ -207,10 +203,11 @@ void addAnimals(list<Animal *> *database, vector<string> species) {
         }
         int speciesValue = 0;
         cin >> speciesValue;
-        while(speciesValue <= 0 || speciesValue > species.size()) {
+        while(speciesValue < 1 || speciesValue > species.size()) {
             cout << "Invalid entry, enter a value between 1 and " << species.size()-1;
             cin >> speciesValue;
         }
+        speciesName = species.at(speciesValue - 1);
         cout << number;
         cin >> animalCount;
         while (animalCount < 0) {
@@ -218,14 +215,14 @@ void addAnimals(list<Animal *> *database, vector<string> species) {
             cin >> animalCount;
         }
         cout << "\n";
-        Animal* animal = new Animal;
-        animal->typeCount = animalCount;
-        strncpy_s(animal->name, MAX_LENGTH, inputCstring, MAX_LENGTH);
-        strncpy_s(animal->species, MAX_LENGTH, speciesName.c_str(), MAX_LENGTH);
-        animal->endangered = animalCount < ENDANGERED_COUNT;
+        Animal animal = *new Animal;
+        animal.typeCount = animalCount;
+        strncpy_s(animal.name, MAX_LENGTH, inputCstring, MAX_LENGTH);
+        strncpy_s(animal.species, MAX_LENGTH, speciesName.c_str(), MAX_LENGTH);
+        animal.endangered = animalCount < ENDANGERED_COUNT;
         
         for (auto iterator = database->begin(); iterator != database->end(); ++iterator) {
-            if((*iterator)->name > animal->name){
+            if((*iterator).name > animal.name){
                 iterator--;
                 database->insert(iterator, animal);
                 return;
@@ -239,10 +236,10 @@ void addAnimals(list<Animal *> *database, vector<string> species) {
  * This function refreshes the file to ensure that the file is in the same order as the list
  * Modifies entire file, so takes a long time, avoid using if possible
  */
-void refreshFile(list<Animal *>& animals, fstream &stream) {
+void refreshFile(list<Animal>& animals, fstream &stream) {
     stream.seekp(ios::beg);
-    for (Animal* animal : animals) {
-        stream.write(reinterpret_cast<char*>(animal), sizeof(Animal));
+    for (Animal animal : animals) {
+        stream.write(reinterpret_cast<char*>(&animal), sizeof(Animal));
     }
 }
 
@@ -250,15 +247,15 @@ void refreshFile(list<Animal *>& animals, fstream &stream) {
  * Displays the list of animals with their name, species, population, and whether they are endangered or not
  * Takes parameter of the list of animals
  */
-void displayAnimals(list<Animal*> database) {
+void displayAnimals(list<Animal> database) {
     const char ENDANGERED_STRING[] = "\nThis animal is endangered";
     const char NOT_ENDANGERED_STRING[] = "\nThis animal is not endangered";
     sortStrings(database);
-    for (const Animal* animal: database) {
-        cout << "\nAnimal: " << (*animal).name <<
-             "\nOf species " << (*animal).species <<
-             "\nHas a count of: " << (*animal).typeCount <<
-             ((*animal).endangered ? ENDANGERED_STRING : NOT_ENDANGERED_STRING);
+    for (const Animal animal: database) {
+        cout << "\nAnimal: " << (animal).name <<
+             "\nOf species " << (animal).species <<
+             "\nHas a count of: " << (animal).typeCount <<
+             ((animal).endangered ? ENDANGERED_STRING : NOT_ENDANGERED_STRING);
         cout << "\n\n";
     }
     if(database.empty()){
@@ -270,12 +267,12 @@ void displayAnimals(list<Animal*> database) {
  * Displays the names of the animals that are endangered
  * Takes in the list of animals and checks if the animal is endangered, and prints
  */
-void displayEndangered(list<Animal*> database) {
+void displayEndangered(list<Animal> database) {
     const char ENDANGERED_STRING[] = " is endangered\n";
     sortStrings(database);
-    for(const Animal* animal : database){
-        if((*animal).endangered){
-            cout << (*animal).name << ENDANGERED_STRING;
+    for(const Animal animal : database){
+        if((animal).endangered){
+            cout << (animal).name << ENDANGERED_STRING;
         }
     }
     if(database.empty()){
@@ -288,21 +285,21 @@ void displayEndangered(list<Animal*> database) {
  * Asks the user if they want to update the record as well
  * Takes in the list of animals, the list of species, and a filestream that is passed through
  */
-void searchAnimals(list<Animal*> animals, const vector<string>& species, fstream &stream) {
+void searchAnimals(list<Animal> animals, const vector<string>& species, fstream &stream) {
     sortStrings(animals);
     cout << "Enter the name of the animal you are looking for: ";
     string input;
     cin.ignore();
     getline(cin, input);
     int i = 0;
-    for (Animal* animal : animals){
-        if(animal->name == input){
+    for (Animal animal : animals){
+        if(animal.name == input){
             cout << "Animal found" << endl
-                 << "Animal: " << animal->name << endl
-                 << "Species: " << animal->species << endl
-                 << "Population: " << animal->typeCount
+                 << "Animal: " << animal.name << endl
+                 << "Species: " << animal.species << endl
+                 << "Population: " << animal.typeCount
                  << ". This animal is "
-                 << (animal->endangered ? "Endangered!" : "Not Endangered!") << endl;
+                 << (animal.endangered ? "Endangered!" : "Not Endangered!") << endl;
             cout << "Do you want to update the record?<y/n>";
             cin >> input;
             while(input != "y" || input != "n") {
@@ -327,7 +324,7 @@ void searchAnimals(list<Animal*> animals, const vector<string>& species, fstream
 /*
  * Finds the location of the record in the file and puts the new animal record into the file, overwriting the old record
  */
-void updateRecordInFile(list<Animal*> animals, int location, fstream &stream) {
+void updateRecordInFile(list<Animal> animals, int location, fstream &stream) {
     stream.seekg(location * sizeof(Animal), ios::beg);
     stream.seekp(ios::beg + location * sizeof(Animal));
     stream.write(reinterpret_cast <char*> (getValueInList(animals, location)), sizeof(Animal));
@@ -339,7 +336,7 @@ void updateRecordInFile(list<Animal*> animals, int location, fstream &stream) {
  * Also calls updateRecordInFile to update the file
  * Takes in the list of animals, the location that needs to be updated, the list of species and the filestream passes through
  */
-void updateRecordInVector(list<Animal*> &animals, int loc, vector<string> species, fstream &stream) {
+void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species, fstream &stream) {
     const string animalUpdate = "Enter the value you want to change animal to(! for no change)";
     const string speciesUpdate = "Enter the new species of the animal";
     const string countUpdate = "Enter the new count of animals";
@@ -381,25 +378,25 @@ void updateRecordInVector(list<Animal*> &animals, int loc, vector<string> specie
 }
 
 /*
- * Sorts the animals in the parameter animals vector by name
+ * Sorts the animals in the parameter animals vector by name, in place
  */
-void sortStrings(list<Animal*> &animals) {
-    animals.sort([](Animal *a, Animal *b) { return strncmp(a->name, b->name, MAX_LENGTH) < 0; });
+void sortStrings(list<Animal> &animals) {
+    animals.sort([](Animal a, Animal b)  { return strncmp(a.name, b.name, MAX_LENGTH) < 0; });
 }
 
 /*
  * Reads the animals from the filesteream and pushes them onto the vector
  * Takes in parameters of the list of animals and the filestream
  */
-void readAnimal(list<Animal *> &animals, fstream &stream) {
+void readAnimal(list<Animal> &animals, fstream &stream) {
     while (!stream.eof()) {
         if(!stream.good() || stream.eof()) {
             cout << "read failed";
             return;
         }
-        Animal* animal = new Animal;
+        Animal animal = *new Animal;
         animals.push_back(animal);
-        stream.read(reinterpret_cast<char*>(animals.back()), sizeof(Animal));
+        stream.read(reinterpret_cast<char*>(&animals.back()), sizeof(Animal));
     }
     animals.pop_back();
     updateEndangered(&animals);
@@ -410,9 +407,9 @@ void readAnimal(list<Animal *> &animals, fstream &stream) {
  * Updates the endangered values for all animal records, good if the file data is incorrect or just needs to be refreshed
  * Takes in the list of animals
  */
-void updateEndangered(list<Animal *> *animals) {
-    for (Animal *animal : *animals) {
-        animal->endangered = animal->typeCount < ENDANGERED_COUNT;
+void updateEndangered(list<Animal> *animals) {
+    for (Animal animal : *animals) {
+        animal.endangered = animal.typeCount < ENDANGERED_COUNT;
     }
 }
 
@@ -435,10 +432,10 @@ void readSpecies(vector<string> &species, fstream &stream) {
  * Takes in the list of animals and the location that is needed
  * Returns the animal at that location
  */
-Animal* getValueInList(list<Animal*> animals, int location){
+Animal* getValueInList(list<Animal> animals, int location){
     auto iter = animals.begin();
     for (int i = 0; i < location; ++i) {
         iter++;
     }
-    return *iter;
+    return &*iter;
 }
