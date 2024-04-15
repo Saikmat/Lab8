@@ -26,7 +26,26 @@ struct Animal {
     char species[MAX_LENGTH];
     int typeCount;
     bool endangered;
+    
+    inline bool operator>(const Animal a){
+        return strcmp(this->name, a.name) > 0;
+    }
+    
+    inline bool operator<(const Animal a){
+        return strcmp(this->name, a.name) < 0;
+    }
+    
+    inline bool operator ==(const Animal a){
+        return strcmp(this->name, a.name) == 0;
+    }
+    
+    inline bool operator !=(const Animal a){
+      return strcmp(this->name, a.name) != 0;
+    }
+    
 };
+
+
 
 void printCopyright();
 
@@ -37,8 +56,6 @@ void displayAnimals(list<Animal> database);
 void displayEndangered(list<Animal> database);
 
 void searchAnimals(list<Animal>, const vector<string>&, fstream&);
-
-void sortStrings(list<Animal> &animals);
 
 void readAnimal(list<Animal>& animals, fstream& stream);
 
@@ -63,8 +80,8 @@ int main() {
     const int DISPLAY_ENDANGERED_MENU_OPTION = 3;
     const int SEARCH_ANIMALS_MENU_OPTION = 4;
     const int QUIT_MENU_OPTION = 5;
-    const string ANIMAL_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\Lab8\animal.dat)";
-    const string SPECIES_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\Lab8\species.txt)";
+    const string ANIMAL_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\animal.dat)";
+    const string SPECIES_RECORD_LOCATION = R"(C:\Users\SaiKM\CLionProjects\Lab8\species.txt)";
 
     fstream animalRecords;
     animalRecords.open(ANIMAL_RECORD_LOCATION, fstream::in | fstream::out | fstream::binary);
@@ -222,8 +239,7 @@ void addAnimals(list<Animal> *database, vector<string> species) {
         animal.endangered = animalCount < ENDANGERED_COUNT;
         
         for (auto iterator = database->begin(); iterator != database->end(); ++iterator) {
-            if((*iterator).name > animal.name){
-                iterator--;
+            if(*iterator > animal){
                 database->insert(iterator, animal);
                 return;
             }
@@ -250,7 +266,6 @@ void refreshFile(list<Animal>& animals, fstream &stream) {
 void displayAnimals(list<Animal> database) {
     const char ENDANGERED_STRING[] = "\nThis animal is endangered";
     const char NOT_ENDANGERED_STRING[] = "\nThis animal is not endangered";
-    sortStrings(database);
     for (const Animal animal: database) {
         cout << "\nAnimal: " << (animal).name <<
              "\nOf species " << (animal).species <<
@@ -269,7 +284,6 @@ void displayAnimals(list<Animal> database) {
  */
 void displayEndangered(list<Animal> database) {
     const char ENDANGERED_STRING[] = " is endangered\n";
-    sortStrings(database);
     for(const Animal animal : database){
         if((animal).endangered){
             cout << (animal).name << ENDANGERED_STRING;
@@ -286,7 +300,6 @@ void displayEndangered(list<Animal> database) {
  * Takes in the list of animals, the list of species, and a filestream that is passed through
  */
 void searchAnimals(list<Animal> animals, const vector<string>& species, fstream &stream) {
-    sortStrings(animals);
     cout << "Enter the name of the animal you are looking for: ";
     string input;
     cin.ignore();
@@ -378,13 +391,6 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
 }
 
 /*
- * Sorts the animals in the parameter animals vector by name, in place
- */
-void sortStrings(list<Animal> &animals) {
-    animals.sort([](Animal a, Animal b)  { return strncmp(a.name, b.name, MAX_LENGTH) < 0; });
-}
-
-/*
  * Reads the animals from the filesteream and pushes them onto the vector
  * Takes in parameters of the list of animals and the filestream
  */
@@ -394,13 +400,26 @@ void readAnimal(list<Animal> &animals, fstream &stream) {
             cout << "read failed";
             return;
         }
-        Animal animal = *new Animal;
-        animals.push_back(animal);
-        stream.read(reinterpret_cast<char*>(&animals.back()), sizeof(Animal));
+        Animal animal{};
+        stream.read(reinterpret_cast<char*>(&animal), sizeof(Animal));
+        if(strcmp(animal.name, "") == 0){
+            return;
+        }
+        auto iter = animals.begin();
+        
+        bool pushed = false;
+        for (int i = 0, SIZE = animals.size(); i < SIZE && !pushed; ++i, iter++) {
+            if(*iter > animal) {
+                animals.insert(iter++, animal);
+                pushed = true;
+            }
+        }
+        if(animals.empty() || !pushed){
+            animals.push_back(animal);
+        }
     }
     animals.pop_back();
     updateEndangered(&animals);
-    sortStrings(animals);
 }
 
 /*
@@ -422,7 +441,6 @@ void readSpecies(vector<string> &species, fstream &stream) {
         char *str = new char[25];
         stream.getline(str, 25);
         species.emplace_back(str);
-
     }
 }
 
