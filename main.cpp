@@ -55,7 +55,7 @@ void displayAnimals(list<Animal> database);
 
 void displayEndangered(list<Animal> database);
 
-void searchAnimals(list<Animal>, const vector<string>&, fstream&);
+void searchAnimals(list<Animal> &, const vector<string>&, fstream&);
 
 void readAnimal(list<Animal>& animals, fstream& stream);
 
@@ -70,6 +70,8 @@ void updateRecordInFile(list<Animal> animals, int location, fstream &stream);
 void updateEndangered(list<Animal> *animals);
 
 Animal* getValueInList(list<Animal> animals, int location);
+
+Animal notTempGetValueInList(list<Animal> animals, int location);
 
 int main() {
     printCopyright();
@@ -299,7 +301,7 @@ void displayEndangered(list<Animal> database) {
  * Asks the user if they want to update the record as well
  * Takes in the list of animals, the list of species, and a filestream that is passed through
  */
-void searchAnimals(list<Animal> animals, const vector<string>& species, fstream &stream) {
+void searchAnimals(list<Animal> &animals, const vector<string>& species, fstream &stream) {
     cout << "Enter the name of the animal you are looking for: ";
     string input;
     cin.ignore();
@@ -358,26 +360,25 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
     cout << animalUpdate;
     cin.ignore();
     getline(cin, temp);
+    Animal animal = notTempGetValueInList(animals, loc);
     
     if(temp != "!"){
-        for (char & specie : getValueInList(animals, loc)->species) {
-            specie = '0';
-        }
-        strncpy_s(getValueInList(animals, loc)->name, MAX_LENGTH, temp.c_str(), MAX_LENGTH);
+        strncpy_s(animal.name, MAX_LENGTH, temp.c_str(), MAX_LENGTH);
     }
 
     cout << speciesUpdate << endl;
     for (int i = 0; i < species.size(); ++i) {
         cout << i+1 << ". " << species.at(i) << endl;
     }
-
+    
     int numberInput;
     cin >> numberInput;
-    while(numberInput < 1 || numberInput >= species.size()){
+    while(numberInput < 1 || numberInput > species.size()){
         cout << "\nThat is an invalid option, enter a value between 1 and " << species.size();
+        cin >> numberInput;
     }
     
-    strncpy_s(getValueInList(animals, loc)->species, MAX_LENGTH, species.at(numberInput-1).c_str(), MAX_LENGTH);
+    strncpy_s(animal.species, MAX_LENGTH, species.at(numberInput-1).c_str(), MAX_LENGTH);
 
     cout << countUpdate;
     cin >> numberInput;
@@ -385,9 +386,11 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
         cout << "Negative Number, please enter a positive number Input for count";
         cin >> numberInput;
     }
-    Animal animalAtLoc = *getValueInList(animals, loc);
-    animalAtLoc.typeCount = numberInput;
-    animalAtLoc.endangered = animalAtLoc.typeCount <= ENDANGERED_COUNT;
+    
+    animal.typeCount = numberInput;
+    animal.endangered = animal.typeCount < ENDANGERED_COUNT;
+    animals.remove(notTempGetValueInList(animals, loc));
+    animals.insert(next(animals.begin(), loc), animal);
     updateRecordInFile(animals, loc, stream);
 }
 
@@ -457,4 +460,12 @@ Animal* getValueInList(list<Animal> animals, int location){
         iter++;
     }
     return &*iter;
+}
+
+Animal notTempGetValueInList(list<Animal> animals, int location){
+    auto iter = animals.begin();
+    for (int i = 0; i < location; ++i) {
+        iter++;
+    }
+    return *iter;
 }
