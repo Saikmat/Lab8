@@ -385,8 +385,9 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
         cout << "Negative Number, please enter a positive number Input for count";
         cin >> numberInput;
     }
-    getValueInList(animals, loc)->typeCount = numberInput;
-    updateEndangered(&animals);
+    Animal animalAtLoc = *getValueInList(animals, loc);
+    animalAtLoc.typeCount = numberInput;
+    animalAtLoc.endangered = animalAtLoc.typeCount <= ENDANGERED_COUNT;
     updateRecordInFile(animals, loc, stream);
 }
 
@@ -410,7 +411,7 @@ void readAnimal(list<Animal> &animals, fstream &stream) {
         bool pushed = false;
         for (int i = 0, SIZE = animals.size(); i < SIZE && !pushed; ++i, iter++) {
             if(*iter > animal) {
-                animals.insert(iter++, animal);
+                animals.insert(iter, animal);
                 pushed = true;
             }
         }
