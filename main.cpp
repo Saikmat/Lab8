@@ -69,9 +69,9 @@ void updateRecordInFile(list<Animal> animals, int location, fstream &stream);
 
 void updateEndangered(list<Animal> *animals);
 
-Animal* getValueInList(list<Animal> animals, int location);
+Animal* refGetValueInList(list<Animal> &animals, int location);
 
-Animal notTempGetValueInList(list<Animal> animals, int location);
+Animal rawGetValueInList(list<Animal> &animals, int location);
 
 int main() {
     printCopyright();
@@ -234,7 +234,7 @@ void addAnimals(list<Animal> *database, vector<string> species) {
             cin >> animalCount;
         }
         cout << "\n";
-        Animal animal = *new Animal;
+        Animal animal;
         animal.typeCount = animalCount;
         strncpy_s(animal.name, MAX_LENGTH, inputCstring, MAX_LENGTH);
         strncpy_s(animal.species, MAX_LENGTH, speciesName.c_str(), MAX_LENGTH);
@@ -342,7 +342,7 @@ void searchAnimals(list<Animal> &animals, const vector<string>& species, fstream
 void updateRecordInFile(list<Animal> animals, int location, fstream &stream) {
     stream.seekg(location * sizeof(Animal), ios::beg);
     stream.seekp(ios::beg + location * sizeof(Animal));
-    stream.write(reinterpret_cast <char*> (getValueInList(animals, location)), sizeof(Animal));
+    stream.write(reinterpret_cast <char*> (refGetValueInList(animals, location)), sizeof(Animal));
     stream.close();
 }
 
@@ -360,10 +360,11 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
     cout << animalUpdate;
     cin.ignore();
     getline(cin, temp);
-    Animal animal = notTempGetValueInList(animals, loc);
+    
+    Animal* animal = refGetValueInList(animals, loc);
     
     if(temp != "!"){
-        strncpy_s(animal.name, MAX_LENGTH, temp.c_str(), MAX_LENGTH);
+        strncpy_s(animal->name, MAX_LENGTH, temp.c_str(), MAX_LENGTH);
     }
 
     cout << speciesUpdate << endl;
@@ -378,7 +379,7 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
         cin >> numberInput;
     }
     
-    strncpy_s(animal.species, MAX_LENGTH, species.at(numberInput-1).c_str(), MAX_LENGTH);
+    strncpy_s(animal->species, MAX_LENGTH, species.at(numberInput-1).c_str(), MAX_LENGTH);
 
     cout << countUpdate;
     cin >> numberInput;
@@ -387,10 +388,8 @@ void updateRecordInVector(list<Animal> &animals, int loc, vector<string> species
         cin >> numberInput;
     }
     
-    animal.typeCount = numberInput;
-    animal.endangered = animal.typeCount < ENDANGERED_COUNT;
-    animals.remove(notTempGetValueInList(animals, loc));
-    animals.insert(next(animals.begin(), loc), animal);
+    animal->typeCount = numberInput;
+    animal->endangered = animal->typeCount < ENDANGERED_COUNT;
     updateRecordInFile(animals, loc, stream);
 }
 
@@ -454,7 +453,7 @@ void readSpecies(vector<string> &species, fstream &stream) {
  * Takes in the list of animals and the location that is needed
  * Returns the animal at that location
  */
-Animal* getValueInList(list<Animal> animals, int location){
+Animal* refGetValueInList(list<Animal> &animals, int location){
     auto iter = animals.begin();
     for (int i = 0; i < location; ++i) {
         iter++;
@@ -462,7 +461,7 @@ Animal* getValueInList(list<Animal> animals, int location){
     return &*iter;
 }
 
-Animal notTempGetValueInList(list<Animal> animals, int location){
+Animal rawGetValueInList(list<Animal> &animals, int location){
     auto iter = animals.begin();
     for (int i = 0; i < location; ++i) {
         iter++;
